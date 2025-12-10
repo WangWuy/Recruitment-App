@@ -29,16 +29,19 @@ class AppTheme {
       textTheme: const TextTheme(
         headlineSmall: TextStyle(
           fontFamily: 'Poppins',
+          fontFamilyFallback: ['Arial', 'Helvetica', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'],
           fontWeight: FontWeight.bold,
           color: AppColors.onSurface,
         ),
         titleMedium: TextStyle(
           fontFamily: 'Poppins',
+          fontFamilyFallback: ['Arial', 'Helvetica', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'],
           fontWeight: FontWeight.w600,
           color: AppColors.onSurface,
         ),
         bodyMedium: TextStyle(
           fontFamily: 'Poppins',
+          fontFamilyFallback: ['Arial', 'Helvetica', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'],
           color: AppColors.onSurface,
         ),
       ),

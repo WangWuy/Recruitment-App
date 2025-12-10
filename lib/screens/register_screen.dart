@@ -142,33 +142,6 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
             padding: const EdgeInsets.all(24.0),
             child: Column(
               children: [
-                const SizedBox(height: 20),
-                // Header với nút back
-                Row(
-                  children: [
-                    Container(
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                      ),
-                    ),
-                    const Spacer(),
-                    const Text(
-                      'Đăng ký tài khoản',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const Spacer(),
-                    const SizedBox(width: 48), // Balance the back button
-                  ],
-                ),
                 const SizedBox(height: 30),
                 // Logo và thương hiệu
                 AnimatedBuilder(
@@ -260,18 +233,9 @@ class _RegisterScreenState extends State<RegisterScreen> with TickerProviderStat
                                 const Text(
                                   'Tạo tài khoản mới',
                                   style: TextStyle(
-                                    fontSize: 22,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.bold,
                                     color: Color(0xFF2D3748),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 8),
-                                const Text(
-                                  'Điền thông tin để bắt đầu',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Color(0xFF718096),
                                   ),
                                   textAlign: TextAlign.center,
                                 ),

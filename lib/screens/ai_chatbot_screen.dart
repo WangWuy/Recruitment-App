@@ -270,8 +270,12 @@ Bạn có câu hỏi gì cho tôi không?
                           color: Color(0xFF2D3748),
                           fontSize: 15,
                           height: 1.4,
+                          fontFamilyFallback: ['Arial', 'Helvetica', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'],
                         ),
-                        strong: const TextStyle(fontWeight: FontWeight.bold),
+                        strong: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontFamilyFallback: ['Arial', 'Helvetica', 'sans-serif', 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji'],
+                        ),
                         listBullet: const TextStyle(color: Color(0xFF667eea)),
                       ),
                     ),

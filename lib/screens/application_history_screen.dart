@@ -405,12 +405,16 @@ class _ApplicationHistoryScreenState extends State<ApplicationHistoryScreen>
                     const Icon(Icons.location_on_outlined,
                         size: 16, color: AppColors.textGray),
                     const SizedBox(width: 4),
-                    Text(
-                      application['job_location'] ?? 'N/A',
-                      style: const TextStyle(
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                        color: AppColors.textGray,
+                    Flexible(
+                      child: Text(
+                        application['job_location'] ?? 'N/A',
+                        style: const TextStyle(
+                          fontFamily: 'Poppins',
+                          fontSize: 12,
+                          color: AppColors.textGray,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 16),

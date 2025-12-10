@@ -278,34 +278,12 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                         ),
                         child: Column(
                           children: [
-                            Container(
-                              width: 80,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                gradient: const LinearGradient(
-                                  colors: [
-                                    Color(0xFF667eea),
-                                    Color(0xFF764ba2),
-                                    Color(0xFFf093fb),
-                                  ],
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                ),
-                                borderRadius: BorderRadius.circular(20),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: const Color(0xFF667eea).withOpacity(0.3),
-                                    blurRadius: 15,
-                                    offset: const Offset(0, 8),
-                                  ),
-                                ],
+                            Image.asset(
+                                'assets/images/logo.png',
+                                width: 100,
+                                height: 100,
+                                fit: BoxFit.contain,
                               ),
-                              child: const Icon(
-                                Icons.work_outline,
-                                size: 40,
-                                color: Colors.white,
-                              ),
-                            ),
                             const SizedBox(height: 16),
                             AnimatedBuilder(
                               animation: _logoAnimation,
@@ -376,25 +354,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                const Text(
-                                  'Chào mừng trở lại!',
-                                  style: TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF2D3748),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
                                 const SizedBox(height: 8),
-                                const Text(
-                                  'Đăng nhập để tiếp tục',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Color(0xFF718096),
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 32),
                                 TextFormField(
                                   controller: _emailController,
                                   decoration: InputDecoration(
