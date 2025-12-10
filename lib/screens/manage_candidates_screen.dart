@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../core/constants.dart';
 import '../providers/simple_auth_provider.dart';
 import '../services/employer_service.dart';
 import '../widgets/error_dialog.dart';
+import 'pdf_viewer_screen.dart';
 
 class ManageCandidatesScreen extends StatefulWidget {
   const ManageCandidatesScreen({super.key});
@@ -705,6 +707,28 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen>
                       const SizedBox(height: 20),
                     ],
 
+                    // CV Button
+                    if (application['cv_url'] != null &&
+                        (application['cv_url'] as String).isNotEmpty) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            _viewCV(application['cv_url']);
+                          },
+                          icon: const Icon(Icons.picture_as_pdf),
+                          label: const Text('Xem CV'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     // Action buttons
                     Row(
                       children: [
@@ -957,6 +981,48 @@ class _ManageCandidatesScreenState extends State<ManageCandidatesScreen>
       return '${date.day}/${date.month}/${date.year}';
     } catch (e) {
       return 'Không xác định';
+    }
+  }
+
+  void _viewCV(String cvUrl) {
+    print('=== VIEW CV DEBUG ===');
+    print('CV URL: $cvUrl');
+    print('CV URL Length: ${cvUrl.length}');
+    print('CV URL is empty: ${cvUrl.isEmpty}');
+
+    if (cvUrl.isEmpty) {
+      print('ERROR: CV URL is empty!');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('CV không khả dụng'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    try {
+      print('Navigating to PDF viewer with URL: $cvUrl');
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PdfViewerScreen(
+            pdfUrl: cvUrl,
+            title: 'CV Ứng viên',
+          ),
+        ),
+      );
+      print('Navigation successful');
+    } catch (e, stackTrace) {
+      print('ERROR navigating to PDF viewer: $e');
+      print('Stack trace: $stackTrace');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi khi mở CV: $e'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
+        ),
+      );
     }
   }
 }

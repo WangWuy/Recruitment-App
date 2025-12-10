@@ -55,6 +55,10 @@ Bạn có câu hỏi gì cho tôi không?
   Future<void> _sendMessage(String text) async {
     if (text.trim().isEmpty) return;
 
+    print('=== AI CHATBOT: SEND MESSAGE ===');
+    print('User message: $text');
+    print('Message length: ${text.length}');
+
     final userMessage = ChatMessage(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       content: text,
@@ -67,28 +71,39 @@ Bạn có câu hỏi gì cho tôi không?
       _isLoading = true;
       _showQuickResponses = false;
     });
+    print('User message added to UI. Total messages: ${_messages.length}');
 
     _messageController.clear();
     _scrollToBottom();
 
     try {
       // Check if API key is configured
+      print('Checking if Gemini service is configured...');
       final isConfigured = await GeminiService.isConfigured();
+      print('Is configured: $isConfigured');
+
       if (!isConfigured) {
+        print('ERROR: Gemini service not configured');
         throw Exception(
           'API key chưa được cấu hình. Vui lòng cập nhật API key trong GeminiService.',
         );
       }
 
       // Get user context
+      print('Getting user context...');
       final auth = context.read<SimpleAuthProvider>();
       final user = auth.user;
+      print('User context: ${user != null ? "Present (ID: ${user['id']})" : "None"}');
 
       // Send message to Gemini
+      print('Sending message to Gemini service...');
       final response = await _geminiService.sendMessage(
         text,
         userContext: user,
       );
+      print('Received response from Gemini');
+      print('Response length: ${response.length} characters');
+      print('Response preview: ${response.substring(0, response.length > 100 ? 100 : response.length)}...');
 
       final aiMessage = ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -101,9 +116,16 @@ Bạn có câu hỏi gì cho tôi không?
         _messages.add(aiMessage);
         _isLoading = false;
       });
+      print('AI message added to UI. Total messages: ${_messages.length}');
 
       _scrollToBottom();
-    } catch (e) {
+      print('=== MESSAGE SENT SUCCESSFULLY ===');
+    } catch (e, stackTrace) {
+      print('=== ERROR IN SEND MESSAGE ===');
+      print('Error: $e');
+      print('Error type: ${e.runtimeType}');
+      print('Stack trace: $stackTrace');
+
       final errorMessage = ChatMessage(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         content: 'Xin lỗi, đã có lỗi xảy ra: ${e.toString()}',
@@ -117,6 +139,7 @@ Bạn có câu hỏi gì cho tôi không?
         _messages.add(errorMessage);
         _isLoading = false;
       });
+      print('Error message added to UI');
 
       _scrollToBottom();
     }
