@@ -1,0 +1,60 @@
+Security: Remove Gemini API key from Flutter, migrate to backend
+
+BREAKING CHANGE: Gemini service now requires backend API
+
+## Changes
+
+### Security
+- Removed hardcoded Gemini API key from Flutter codebase
+- API key now stored securely in backend .env file
+- All Gemini API calls now go through backend endpoints
+
+### Modified Files
+- lib/services/gemini_service.dart: Replaced with backend-calling version
+  - Removed hardcoded API key
+  - Now calls backend API endpoints
+  - Interface remains the same (no breaking changes for consumers)
+
+### Deleted Files
+- lib/services/gemini_service_backend.dart: Merged into gemini_service.dart
+
+### Documentation
+- Updated all .md files to mask API key examples
+- Added comprehensive migration guides
+- Created security best practices documentation
+
+### New Backend Integration
+The service now calls these backend endpoints:
+- POST /api/gemini/chat
+- POST /api/gemini/job-recommendations
+- POST /api/gemini/cv-suggestions
+- POST /api/gemini/interview-prep
+
+## Migration Notes
+
+### For Developers
+1. Update baseUrl in lib/services/gemini_service.dart (line 11)
+   - Android Emulator: http://10.0.2.2:9090
+   - iOS Simulator: http://localhost:9090
+   - Real Device: http://YOUR_IP:9090
+
+2. Ensure backend is running with GEMINI_API_KEY in .env
+
+3. No code changes needed in consumers of GeminiService
+
+### Security Improvements
+- ✅ API key no longer exposed in APK/IPA
+- ✅ Full control over API usage via backend
+- ✅ Can implement rate limiting and authentication
+- ✅ Easy to rotate keys without app updates
+
+## Testing
+- [x] Verified no API keys in lib/ directory
+- [x] Service interface unchanged
+- [ ] TODO: Test with running backend
+- [ ] TODO: Revoke old API key after migration
+
+## References
+- See API-KEY-REMOVAL-SUMMARY.md for details
+- See README-GEMINI-MIGRATION.md for migration guide
+- See CHECKLIST-GEMINI-MIGRATION.md for step-by-step instructions
