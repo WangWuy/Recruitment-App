@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/simple_auth_provider.dart';
 import '../services/google_auth_service.dart';
 import '../widgets/error_dialog.dart';
@@ -18,6 +19,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
   final _googleAuthService = GoogleAuthService();
   bool _obscurePassword = true;
   bool _isGoogleLoading = false;
+  bool _rememberMe = false;
   late AnimationController _logoController;
   late AnimationController _fadeController;
   late Animation<double> _logoAnimation;
@@ -34,7 +36,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    
+
     _logoAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -42,7 +44,7 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       parent: _logoController,
       curve: Curves.elasticOut,
     ));
-    
+
     _fadeAnimation = Tween<double>(
       begin: 0.0,
       end: 1.0,
@@ -50,19 +52,22 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
       parent: _fadeController,
       curve: Curves.easeInOut,
     ));
-    
+
     _logoController.forward();
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted && !_fadeController.isAnimating) {
         _fadeController.forward();
       }
     });
-    
+
+    // Load saved credentials if rememberMe was enabled
+    _loadSavedCredentials();
+
     // Restore session khi vào trang đăng nhập (có thể bỏ qua)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       // Uncomment dòng dưới để bỏ qua auto login
       // return; // Bỏ qua session restore
-      
+
       context.read<SimpleAuthProvider>().restoreSession().then((_) {
         if (mounted) {
           final auth = context.read<SimpleAuthProvider>();
@@ -90,6 +95,22 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     });
   }
 
+  Future<void> _loadSavedCredentials() async {
+    final prefs = await SharedPreferences.getInstance();
+    final rememberMe = prefs.getBool('rememberMe') ?? false;
+    if (rememberMe) {
+      final savedEmail = prefs.getString('savedEmail');
+      final savedPassword = prefs.getString('savedPassword');
+      if (savedEmail != null && savedPassword != null) {
+        setState(() {
+          _emailController.text = savedEmail;
+          _passwordController.text = savedPassword;
+          _rememberMe = true;
+        });
+      }
+    }
+  }
+
   @override
   void dispose() {
     _emailController.dispose();
@@ -103,12 +124,24 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = Provider.of<SimpleAuthProvider>(context, listen: false);
+    final prefs = await SharedPreferences.getInstance();
 
     try {
       await authProvider.login(
         _emailController.text.trim(),
         _passwordController.text,
       );
+
+      // Save or clear credentials based on rememberMe checkbox
+      if (_rememberMe) {
+        await prefs.setBool('rememberMe', true);
+        await prefs.setString('savedEmail', _emailController.text.trim());
+        await prefs.setString('savedPassword', _passwordController.text);
+      } else {
+        await prefs.setBool('rememberMe', false);
+        await prefs.remove('savedEmail');
+        await prefs.remove('savedPassword');
+      }
 
       if (mounted) {
         // Navigate based on user role
@@ -416,7 +449,32 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                     return null;
                                   },
                                 ),
-                                const SizedBox(height: 24),
+                                const SizedBox(height: 16),
+                                // Checkbox Ghi nhớ đăng nhập
+                                Row(
+                                  children: [
+                                    Checkbox(
+                                      value: _rememberMe,
+                                      onChanged: (value) {
+                                        setState(() {
+                                          _rememberMe = value ?? false;
+                                        });
+                                      },
+                                      activeColor: const Color(0xFF667eea),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(4),
+                                      ),
+                                    ),
+                                    const Text(
+                                      'Ghi nhớ đăng nhập',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Color(0xFF718096),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
                                 Consumer<SimpleAuthProvider>(
                                   builder: (context, authProvider, child) {
                                     return Container(
@@ -513,10 +571,10 @@ class _LoginScreenState extends State<LoginScreen> with TickerProviderStateMixin
                                               color: Color(0xFF667eea),
                                             ),
                                           )
-                                        : Icon(
-                                            Icons.g_mobiledata_rounded,
-                                            size: 32,
-                                            color: Colors.grey.shade700,
+                                        : Image.asset(
+                                            'assets/images/google_logo.png',
+                                            height: 24,
+                                            width: 24,
                                           ),
                                     label: Text(
                                       _isGoogleLoading ? 'Đang đăng nhập...' : 'Đăng nhập với Google',
