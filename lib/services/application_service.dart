@@ -6,7 +6,7 @@ class ApplicationService {
   static final String _baseUrl = AppConstants.apiBaseUrl;
 
   // Apply for a job
-  Future<Map<String, dynamic>> applyForJob(String token, int jobId, String coverLetter) async {
+  Future<Map<String, dynamic>> applyForJob(String token, int jobId, String coverLetter, {String? cvUrl}) async {
     try {
       final response = await http.post(
         Uri.parse('$_baseUrl/api/applications'),
@@ -17,6 +17,7 @@ class ApplicationService {
         body: jsonEncode({
           'job_id': jobId,
           'cover_letter': coverLetter,
+          'cv_url': cvUrl,
         }),
       );
 

@@ -6,6 +6,8 @@ import '../providers/simple_auth_provider.dart';
 import '../providers/application_provider.dart';
 import '../services/job_service.dart';
 import '../widgets/success_dialog.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import '../widgets/error_dialog.dart';
 
 class JobDetailScreen extends StatefulWidget {
@@ -83,12 +85,30 @@ class _JobDetailScreenState extends State<JobDetailScreen>
     }
 
     // Show cover letter dialog
-    final coverLetter = await _showCoverLetterDialog();
-    if (coverLetter == null) return;
+    final result = await _showCoverLetterDialog();
+    if (result == null) return;
+
+    final coverLetter = result['coverLetter'];
+    final cvFile = result['cvFile'] as File?;
+    String? cvUrl;
+
+    // Upload CV if selected
+    if (cvFile != null) {
+      // Show uploading dialog or indicator? For now just await
+      try {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Đang tải lên CV...')),
+        );
+        cvUrl = await _jobService.uploadCV(auth.token!, cvFile);
+      } catch (e) {
+        if (mounted) ErrorDialog.show(context, 'Không thể tải lên CV: $e');
+        return;
+      }
+    }
 
     final applicationProvider = ApplicationProvider();
     final success = await applicationProvider.applyForJob(
-        auth.token!, widget.job['id'], coverLetter);
+        auth.token!, widget.job['id'], coverLetter, cvUrl: cvUrl);
 
     if (mounted) {
       if (success) {
@@ -158,43 +178,134 @@ class _JobDetailScreenState extends State<JobDetailScreen>
     }
   }
 
-  Future<String?> _showCoverLetterDialog() async {
+  Future<Map<String, dynamic>?> _showCoverLetterDialog() async {
     final controller = TextEditingController();
+    File? selectedFile;
 
-    return await showDialog<String>(
+    return await showDialog<Map<String, dynamic>>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thư xin việc'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-                'Hãy viết một vài dòng về bản thân và lý do bạn muốn ứng tuyển:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              maxLines: 5,
-              decoration: const InputDecoration(
-                hintText: 'Viết thư xin việc của bạn...',
-                border: OutlineInputBorder(),
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Thư xin việc & CV'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Hãy viết một vài dòng về bản thân và lý do bạn muốn ứng tuyển:',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: controller,
+                  maxLines: 5,
+                  decoration: const InputDecoration(
+                    hintText: 'Viết thư xin việc của bạn...',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.all(12),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Hồ sơ đính kèm (CV):',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                InkWell(
+                  onTap: () async {
+                    try {
+                      FilePickerResult? result = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf', 'doc', 'docx'],
+                      );
+
+                      if (result != null) {
+                       setState(() {
+                          selectedFile = File(result.files.single.path!);
+                        });
+                      }
+                    } catch (e) {
+                      print('Error picking file: $e');
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.grey.shade400, style: BorderStyle.solid),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey.shade50,
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          selectedFile != null ? Icons.description : Icons.upload_file,
+                          color: selectedFile != null ? AppColors.primary : Colors.grey.shade600,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            selectedFile != null 
+                              ? selectedFile!.path.split('/').last 
+                              : 'Nhấn để tải lên CV (PDF)',
+                            style: TextStyle(
+                              color: selectedFile != null ? AppColors.primary : Colors.grey.shade600,
+                              fontWeight: selectedFile != null ? FontWeight.w500 : FontWeight.normal,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (selectedFile != null)
+                          IconButton(
+                            icon: const Icon(Icons.close, size: 20, color: Colors.grey),
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                            onPressed: () {
+                              setState(() {
+                                selectedFile = null;
+                              });
+                            },
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (controller.text.trim().isNotEmpty) {
+                  Navigator.pop(context, {
+                    'coverLetter': controller.text.trim(),
+                    'cvFile': selectedFile,
+                  });
+                } else {
+                   // Allow submitting without cover letter if there is a file? 
+                   // Or require cover letter? Original code required cover letter.
+                   // Let's stick to requiring cover letter OR file. Or just cover letter as before.
+                   // User asked to add file, not replace cover letter.
+                   if (controller.text.trim().isEmpty && selectedFile == null) {
+                     // Empty submission
+                   } else {
+                      Navigator.pop(context, {
+                        'coverLetter': controller.text.trim(),
+                        'cvFile': selectedFile,
+                      });
+                   }
+                }
+              },
+              child: const Text('Gửi'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Hủy'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (controller.text.trim().isNotEmpty) {
-                Navigator.pop(context, controller.text.trim());
-              }
-            },
-            child: const Text('Gửi'),
-          ),
-        ],
       ),
     );
   }

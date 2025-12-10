@@ -13,12 +13,12 @@ class ApplicationProvider {
   String? get error => _error;
 
   // Apply for a job
-  Future<bool> applyForJob(String token, int jobId, String coverLetter) async {
+  Future<bool> applyForJob(String token, int jobId, String coverLetter, {String? cvUrl}) async {
     _setLoading(true);
     _error = null;
     
     try {
-      await _applicationService.applyForJob(token, jobId, coverLetter);
+      await _applicationService.applyForJob(token, jobId, coverLetter, cvUrl: cvUrl);
       return true;
     } catch (e) {
       _error = e.toString();

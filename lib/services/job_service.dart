@@ -1,9 +1,48 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import '../core/constants.dart';
 
 class JobService {
   static final String _baseUrl = AppConstants.apiBaseUrl;
+
+  Future<String> uploadCV(String token, File file) async {
+    try {
+      final uri = Uri.parse('$_baseUrl/api/upload');
+      final request = http.MultipartRequest('POST', uri);
+      
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      final mimeTypeData = lookupMimeType(file.path, headerBytes: [0xFF, 0xD8])?.split('/');
+      final fileStream = http.ByteStream(file.openRead());
+      final length = await file.length();
+      
+      final multipartFile = http.MultipartFile(
+        'file',
+        fileStream,
+        length,
+        filename: file.path.split('/').last,
+        contentType: mimeTypeData != null ? MediaType(mimeTypeData[0], mimeTypeData[1]) : null,
+      );
+      
+      request.files.add(multipartFile);
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['url'];
+      } else {
+        final data = jsonDecode(response.body);
+        throw Exception(data['message'] ?? 'Failed to upload CV');
+      }
+    } catch (e) {
+      throw Exception('Error uploading CV: $e');
+    }
+  }
 
   Future<List<Map<String, dynamic>>> fetchJobs({
     String? keyword,
