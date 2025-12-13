@@ -31,6 +31,10 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   // Track saved jobs
   final Set<int> _savedJobIds = {};
+  // Build absolute URLs for company avatars/logo
+  late final String _baseUrl = AppConstants.apiBaseUrl.endsWith('/')
+      ? AppConstants.apiBaseUrl.substring(0, AppConstants.apiBaseUrl.length - 1)
+      : AppConstants.apiBaseUrl;
   
   final List<String> _categories = [
     'Tất cả',
@@ -116,6 +120,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _searchAnimationController.dispose();
     _searchController.dispose();
     super.dispose();
+  }
+
+  String? _resolveLogoUrl(dynamic rawUrl) {
+    if (rawUrl == null) return null;
+    final url = rawUrl.toString().trim();
+    if (url.isEmpty) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    final normalized = url.startsWith('/') ? url.substring(1) : url;
+    return '$_baseUrl/$normalized';
   }
 
   Future<void> _loadJobs() async {
@@ -1106,20 +1119,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                // Company logo placeholder
-                Container(
-                  width: 50,
-                  height: 50,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.business,
-                    color: Colors.white,
-                    size: 24,
-                  ),
-                ),
+                _buildCompanyAvatar(job['company_logo']),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Column(
@@ -1135,7 +1135,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        job['company'] ?? 'Không có công ty',
+                        job['company'] ?? job['company_name'] ?? 'Không có công ty',
                         style: TextStyle(
                           fontSize: 14,
                           color: AppColors.textGray,
@@ -1171,7 +1171,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
-                              job['type'] ?? 'Full-time',
+                              job['type'] ?? job['employment_type'] ?? 'Full-time',
                               style: const TextStyle(
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
@@ -1204,6 +1204,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildCompanyAvatar(dynamic logoUrl) {
+    final resolvedUrl = _resolveLogoUrl(logoUrl);
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        gradient: resolvedUrl == null ? AppColors.primaryGradient : null,
+        color: resolvedUrl != null ? Colors.grey.shade200 : null,
+      ),
+      child: resolvedUrl == null
+          ? const Icon(Icons.business, color: Colors.white, size: 24)
+          : ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                resolvedUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  color: Colors.grey.shade300,
+                  child: const Icon(Icons.business, color: AppColors.primary),
+                ),
+              ),
+            ),
     );
   }
 
